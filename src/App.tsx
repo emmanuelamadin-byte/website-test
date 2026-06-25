@@ -352,7 +352,7 @@ export default function App() {
   useEffect(() => {
     if (!FIREBASE_READY || !_auth) return;
     signInAnonymously(_auth).catch((e) => {
-      console.warn('Auth:', e);
+      console.warn('Auth failed:', e);
       setLoadedKeys({
         content: true,
         services: true,
@@ -368,25 +368,7 @@ export default function App() {
       setTestimonials(prev => prev ?? INITIAL_TESTIMONIALS);
       setTeamMembers(prev => prev ?? INITIAL_TEAM);
     });
-    const unsub = onAuthStateChanged(_auth, (u) => {
-      setUser(u);
-      if (!u) {
-        setLoadedKeys({
-          content: true,
-          services: true,
-          projects: true,
-          ongoingProjects: true,
-          testimonials: true,
-          teamMembers: true,
-        });
-        setContent(prev => prev ?? INITIAL_CONTENT);
-        setServices(prev => prev ?? INITIAL_SERVICES);
-        setProjects(prev => prev ?? INITIAL_PROJECTS);
-        setOngoingProjects(prev => prev ?? INITIAL_ONGOING);
-        setTestimonials(prev => prev ?? INITIAL_TESTIMONIALS);
-        setTeamMembers(prev => prev ?? INITIAL_TEAM);
-      }
-    });
+    const unsub = onAuthStateChanged(_auth, setUser);
     return () => unsub();
   }, []);
 
@@ -776,14 +758,14 @@ function HomeView({ navigate, content, projects, ongoingProjects, testimonials }
             </p>
           </div>
 
-          <div className="grid grid-cols-12 gap-3 md:gap-4 h-[480px] md:h-[700px]">
-            <div className="col-span-12 md:col-span-8 row-span-2 overflow-hidden relative group rounded-sm reveal">
+          <div className="grid grid-cols-12 gap-3 md:gap-4 h-auto md:h-[700px]">
+            <div className="col-span-12 md:col-span-8 md:row-span-2 overflow-hidden relative group rounded-sm reveal h-[280px] md:h-auto">
               <img src={content?.philImg1 || "https://images.unsplash.com/photo-1600210491369-e753d80a41f3?auto=format&fit=crop&q=80&w=1400"} alt="Luxury living space" loading="lazy" className="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-105" onError={imgError} />
             </div>
-            <div className="hidden md:block col-span-4 overflow-hidden relative group rounded-sm reveal reveal-delay-1 h-[340px]">
+            <div className="col-span-6 md:col-span-4 overflow-hidden relative group rounded-sm reveal reveal-delay-1 h-[180px] md:h-[340px]">
               <img src={content?.philImg2 || "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=600"} alt="Modern detail" loading="lazy" className="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-105" onError={imgError} />
             </div>
-            <div className="hidden md:block col-span-4 overflow-hidden relative group rounded-sm reveal reveal-delay-2 h-[348px]">
+            <div className="col-span-6 md:col-span-4 overflow-hidden relative group rounded-sm reveal reveal-delay-2 h-[180px] md:h-[348px]">
               <img src={content?.philImg3 || "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=600"} alt="Premium decor" loading="lazy" className="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-105" onError={imgError} />
             </div>
           </div>
@@ -1497,17 +1479,16 @@ function AdminLogin({ setIsAdminAuth }: { setIsAdminAuth: (v: boolean) => void }
 //  ADMIN DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════
 function AdminDashboard({ content, setContent, services, setServices, projects, setProjects, ongoingProjects, setOngoingProjects, testimonials, setTestimonials, teamMembers, setTeamMembers, setIsAdminAuth }: any) {
-  const [tab, setTab] = useState('hero');
+  const [tab, setTab] = useState('home');
 
   const TABS = [
-    { id: 'hero',         label: 'Hero' },
+    { id: 'home',         label: 'Home Section' },
     { id: 'about',        label: 'About' },
     { id: 'services',     label: 'Services' },
     { id: 'projects',     label: 'Projects' },
     { id: 'ongoing',      label: 'Ongoing' },
     { id: 'testimonials', label: 'Testimonials' },
     { id: 'team',         label: 'Team' },
-    { id: 'philosophy',   label: 'Philosophy & Stats' },
     { id: 'headers',      label: 'Page Titles' },
     { id: 'contact',      label: 'Contact' },
   ];
@@ -1535,7 +1516,7 @@ function AdminDashboard({ content, setContent, services, setServices, projects, 
       </div>
 
       <div className="bg-white p-6 md:p-10 border border-gray-100 rounded-b-2xl rounded-tr-2xl shadow-sm min-h-[500px]">
-        {tab === 'hero'         && <AdminHeroTab        content={content}        setContent={setContent} />}
+        {tab === 'home'         && <AdminHomeTab        content={content}        setContent={setContent} />}
         {tab === 'about'        && <AdminAboutTab       content={content}        setContent={setContent} />}
         {tab === 'services'     && <AdminCollectionTab  collectionName="services"     items={services}     setItems={setServices}
           defaultItem={{ title: '', desc: '', detailedDesc: '', price: '', image: '' }}
@@ -1554,7 +1535,6 @@ function AdminDashboard({ content, setContent, services, setServices, projects, 
           defaultItem={{ name: '', role: '', bio: '', image: '' }}
           fields={[{ key: 'name', label: 'Full Name' }, { key: 'role', label: 'Role / Title' }, { key: 'bio', label: 'Short Bio', type: 'textarea' }, { key: 'image', label: 'Profile Photo', type: 'image' }]}
         />}
-        {tab === 'philosophy'   && <AdminPhilosophyTab  content={content}        setContent={setContent} />}
         {tab === 'headers'      && <AdminTitlesTab      content={content}        setContent={setContent} />}
         {tab === 'contact'      && <AdminContactTab     content={content}        setContent={setContent} />}
       </div>
@@ -1562,10 +1542,15 @@ function AdminDashboard({ content, setContent, services, setServices, projects, 
   );
 }
 
-// ─── Admin: Hero Tab ───────────────────────────────────────────────────────
-function AdminHeroTab({ content, setContent }: any) {
+// ─── Admin: Home Tab ───────────────────────────────────────────────────────
+function AdminHomeTab({ content, setContent }: any) {
   const [draft,  setDraft]  = useState({ ...content });
   const [saving, setSaving] = useState(false);
+
+  // Sync draft if content changes from DB
+  useEffect(() => {
+    if (content) setDraft({ ...content });
+  }, [content]);
 
   const save = async () => {
     if (!_db) return alert('Firebase not connected.');
@@ -1582,10 +1567,73 @@ function AdminHeroTab({ content, setContent }: any) {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Hero Section</h2>
-      <div><label className={labelCls}>Headline</label><input value={draft.heroHeadline} onChange={(e) => setDraft({ ...draft, heroHeadline: e.target.value })} className={inputCls} placeholder="Luxury & Ultra-Modern Designs" /></div>
-      <div><label className={labelCls}>Subtitle / Tagline</label><textarea rows={3} value={draft.heroSub} onChange={(e) => setDraft({ ...draft, heroSub: e.target.value })} className={inputCls} /></div>
-      <ImageUploader label="Hero Background Image" currentUrl={draft.heroImage} onUpload={(url) => setDraft({ ...draft, heroImage: url })} />
+      <div>
+        <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Home Section — Hero Banner</h2>
+        <div className="space-y-5 mt-4">
+          <div><label className={labelCls}>Hero Headline</label><input value={draft.heroHeadline || ''} onChange={(e) => setDraft({ ...draft, heroHeadline: e.target.value })} className={inputCls} placeholder="Luxury & Ultra-Modern Designs" /></div>
+          <div><label className={labelCls}>Hero Subtitle / Description</label><textarea rows={3} value={draft.heroSub || ''} onChange={(e) => setDraft({ ...draft, heroSub: e.target.value })} className={inputCls} /></div>
+          <div><label className={labelCls}>Hero Top Tagline</label><input value={draft.heroTagline || ''} onChange={(e) => setDraft({ ...draft, heroTagline: e.target.value })} className={inputCls} placeholder="Luxury · Precision · Excellence" /></div>
+          <ImageUploader label="Hero Background Image" currentUrl={draft.heroImage} onUpload={(url) => setDraft({ ...draft, heroImage: url })} />
+        </div>
+      </div>
+
+      <div className="pt-6 border-t border-gray-150">
+        <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Home Section — Design Philosophy</h2>
+        <div className="space-y-5 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div><label className={labelCls}>Philosophy Subtitle</label><input value={draft.philSubtitle || ''} onChange={(e) => setDraft({ ...draft, philSubtitle: e.target.value })} className={inputCls} /></div>
+            <div><label className={labelCls}>Philosophy Title</label><input value={draft.philTitle || ''} onChange={(e) => setDraft({ ...draft, philTitle: e.target.value })} className={inputCls} /></div>
+          </div>
+          <div><label className={labelCls}>Philosophy Description</label><textarea rows={3} value={draft.philDesc || ''} onChange={(e) => setDraft({ ...draft, philDesc: e.target.value })} className={inputCls} /></div>
+          <div className="space-y-4">
+            <label className={labelCls}>Philosophy Section Images</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <ImageUploader label="Main Image (Left / Top on Mobile)" currentUrl={draft.philImg1 || ''} onUpload={(url) => setDraft({ ...draft, philImg1: url })} />
+              <ImageUploader label="Image 2 (Top Right / Middle on Mobile)" currentUrl={draft.philImg2 || ''} onUpload={(url) => setDraft({ ...draft, philImg2: url })} />
+              <ImageUploader label="Image 3 (Bottom Right / Bottom on Mobile)" currentUrl={draft.philImg3 || ''} onUpload={(url) => setDraft({ ...draft, philImg3: url })} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-6 border-t border-gray-150">
+        <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Home Section — Stats Counter</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mt-4">
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <label className={labelCls}>Stat 1 Number</label>
+            <input value={draft.stat1Num || ''} onChange={(e) => setDraft({ ...draft, stat1Num: e.target.value })} className={inputCls} placeholder="50+" />
+            <label className={`${labelCls} mt-2`}>Stat 1 Label</label>
+            <input value={draft.stat1Label || ''} onChange={(e) => setDraft({ ...draft, stat1Label: e.target.value })} className={inputCls} placeholder="Projects Completed" />
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <label className={labelCls}>Stat 2 Number</label>
+            <input value={draft.stat2Num || ''} onChange={(e) => setDraft({ ...draft, stat2Num: e.target.value })} className={inputCls} placeholder="8+" />
+            <label className={`${labelCls} mt-2`}>Stat 2 Label</label>
+            <input value={draft.stat2Label || ''} onChange={(e) => setDraft({ ...draft, stat2Label: e.target.value })} className={inputCls} placeholder="Years of Excellence" />
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <label className={labelCls}>Stat 3 Number</label>
+            <input value={draft.stat3Num || ''} onChange={(e) => setDraft({ ...draft, stat3Num: e.target.value })} className={inputCls} placeholder="3" />
+            <label className={`${labelCls} mt-2`}>Stat 3 Label</label>
+            <input value={draft.stat3Label || ''} onChange={(e) => setDraft({ ...draft, stat3Label: e.target.value })} className={inputCls} placeholder="Cities Served" />
+          </div>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <label className={labelCls}>Stat 4 Number</label>
+            <input value={draft.stat4Num || ''} onChange={(e) => setDraft({ ...draft, stat4Num: e.target.value })} className={inputCls} placeholder="100%" />
+            <label className={`${labelCls} mt-2`}>Stat 4 Label</label>
+            <input value={draft.stat4Label || ''} onChange={(e) => setDraft({ ...draft, stat4Label: e.target.value })} className={inputCls} placeholder="Client Satisfaction" />
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-6 border-t border-gray-150">
+        <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Home Section — Call to Action (CTA)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+          <div><label className={labelCls}>CTA Title</label><textarea rows={2} value={draft.ctaTitle || ''} onChange={(e) => setDraft({ ...draft, ctaTitle: e.target.value })} className={inputCls} placeholder="Your Dream Space\nAwaits" /></div>
+          <div><label className={labelCls}>CTA Description</label><textarea rows={2} value={draft.ctaDesc || ''} onChange={(e) => setDraft({ ...draft, ctaDesc: e.target.value })} className={inputCls} /></div>
+        </div>
+      </div>
+
       <div className="flex justify-end pt-4 border-t border-gray-100">
         <SaveButton saving={saving} onClick={save} />
       </div>
@@ -1655,85 +1703,7 @@ function AdminContactTab({ content, setContent }: any) {
   );
 }
 
-// ─── Admin: Philosophy & Stats Tab ─────────────────────────────────────────
-function AdminPhilosophyTab({ content, setContent }: any) {
-  const [draft,  setDraft]  = useState({ ...content });
-  const [saving, setSaving] = useState(false);
 
-  const save = async () => {
-    if (!_db) return alert('Firebase not connected.');
-    setSaving(true);
-    try {
-      await setDoc(doc(_db, 'websiteContent', 'main'), { ...content, ...draft });
-      setContent((c: any) => ({ ...c, ...draft }));
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      alert('Saved!');
-    } catch (e) {
-      console.error(e);
-      alert('Save failed.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="space-y-8">
-      <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Philosophy Section & CTA</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div><label className={labelCls}>Philosophy Subtitle</label><input value={draft.philSubtitle || ''} onChange={(e) => setDraft({ ...draft, philSubtitle: e.target.value })} className={inputCls} /></div>
-        <div><label className={labelCls}>Philosophy Title</label><input value={draft.philTitle || ''} onChange={(e) => setDraft({ ...draft, philTitle: e.target.value })} className={inputCls} /></div>
-      </div>
-      <div><label className={labelCls}>Philosophy Description</label><textarea rows={3} value={draft.philDesc || ''} onChange={(e) => setDraft({ ...draft, philDesc: e.target.value })} className={inputCls} /></div>
-
-      <div className="space-y-4">
-        <label className={labelCls}>Philosophy Images</label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ImageUploader label="Main Image (Left)" currentUrl={draft.philImg1 || ''} onUpload={(url) => setDraft({ ...draft, philImg1: url })} />
-          <ImageUploader label="Image 2 (Top Right)" currentUrl={draft.philImg2 || ''} onUpload={(url) => setDraft({ ...draft, philImg2: url })} />
-          <ImageUploader label="Image 3 (Bottom Right)" currentUrl={draft.philImg3 || ''} onUpload={(url) => setDraft({ ...draft, philImg3: url })} />
-        </div>
-      </div>
-
-      <h3 className="text-lg font-serif border-b border-gray-100 pb-2 pt-4">Philosophy Stats Counter</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <label className={labelCls}>Stat 1 Number</label>
-          <input value={draft.stat1Num || ''} onChange={(e) => setDraft({ ...draft, stat1Num: e.target.value })} className={inputCls} placeholder="50+" />
-          <label className={`${labelCls} mt-2`}>Stat 1 Label</label>
-          <input value={draft.stat1Label || ''} onChange={(e) => setDraft({ ...draft, stat1Label: e.target.value })} className={inputCls} placeholder="Projects Completed" />
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <label className={labelCls}>Stat 2 Number</label>
-          <input value={draft.stat2Num || ''} onChange={(e) => setDraft({ ...draft, stat2Num: e.target.value })} className={inputCls} placeholder="8+" />
-          <label className={`${labelCls} mt-2`}>Stat 2 Label</label>
-          <input value={draft.stat2Label || ''} onChange={(e) => setDraft({ ...draft, stat2Label: e.target.value })} className={inputCls} placeholder="Years of Excellence" />
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <label className={labelCls}>Stat 3 Number</label>
-          <input value={draft.stat3Num || ''} onChange={(e) => setDraft({ ...draft, stat3Num: e.target.value })} className={inputCls} placeholder="3" />
-          <label className={`${labelCls} mt-2`}>Stat 3 Label</label>
-          <input value={draft.stat3Label || ''} onChange={(e) => setDraft({ ...draft, stat3Label: e.target.value })} className={inputCls} placeholder="Cities Served" />
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <label className={labelCls}>Stat 4 Number</label>
-          <input value={draft.stat4Num || ''} onChange={(e) => setDraft({ ...draft, stat4Num: e.target.value })} className={inputCls} placeholder="100%" />
-          <label className={`${labelCls} mt-2`}>Stat 4 Label</label>
-          <input value={draft.stat4Label || ''} onChange={(e) => setDraft({ ...draft, stat4Label: e.target.value })} className={inputCls} placeholder="Client Satisfaction" />
-        </div>
-      </div>
-
-      <h3 className="text-lg font-serif border-b border-gray-100 pb-2 pt-4">Call to Action (CTA) Banner</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div><label className={labelCls}>CTA Title</label><textarea rows={2} value={draft.ctaTitle || ''} onChange={(e) => setDraft({ ...draft, ctaTitle: e.target.value })} className={inputCls} placeholder="Your Dream Space\nAwaits" /></div>
-        <div><label className={labelCls}>CTA Description</label><textarea rows={2} value={draft.ctaDesc || ''} onChange={(e) => setDraft({ ...draft, ctaDesc: e.target.value })} className={inputCls} /></div>
-      </div>
-
-      <div className="flex justify-end pt-4 border-t border-gray-100">
-        <SaveButton saving={saving} onClick={save} />
-      </div>
-    </div>
-  );
-}
 
 // ─── Admin: Titles & Texts Tab ─────────────────────────────────────────────
 function AdminTitlesTab({ content, setContent }: any) {
