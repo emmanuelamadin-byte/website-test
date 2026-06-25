@@ -89,7 +89,7 @@ interface TeamMember     { id: number; name: string; role: string; bio: string; 
 // ─── Seed Data ────────────────────────────────────────────────────────────
 const INITIAL_CONTENT: SiteContent = {
   brandName:        'Kelvin Armani Enterprise and Interiors',
-  heroHeadline:     'Luxury & Ultra-Modern Designs',
+  heroHeadline:     'Kelvin Armani Interiors and Painting Enterprise',
   heroSub:          'Elevating residential and commercial spaces across Benin City, Edo State, and nationwide with tailored property solutions and impeccable finishes.',
   heroImage:        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=2000',
   heroTagline:      'Luxury · Precision · Excellence',
@@ -1570,7 +1570,7 @@ function AdminHomeTab({ content, setContent }: any) {
       <div>
         <h2 className="text-xl font-serif border-b border-gray-100 pb-4">Home Section — Hero Banner</h2>
         <div className="space-y-5 mt-4">
-          <div><label className={labelCls}>Hero Headline</label><input value={draft.heroHeadline || ''} onChange={(e) => setDraft({ ...draft, heroHeadline: e.target.value })} className={inputCls} placeholder="Luxury & Ultra-Modern Designs" /></div>
+          <div><label className={labelCls}>Hero Headline</label><input value={draft.heroHeadline || ''} onChange={(e) => setDraft({ ...draft, heroHeadline: e.target.value })} className={inputCls} placeholder="Kelvin Armani Interiors and Painting Enterprise" /></div>
           <div><label className={labelCls}>Hero Subtitle / Description</label><textarea rows={3} value={draft.heroSub || ''} onChange={(e) => setDraft({ ...draft, heroSub: e.target.value })} className={inputCls} /></div>
           <div><label className={labelCls}>Hero Top Tagline</label><input value={draft.heroTagline || ''} onChange={(e) => setDraft({ ...draft, heroTagline: e.target.value })} className={inputCls} placeholder="Luxury · Precision · Excellence" /></div>
           <ImageUploader label="Hero Background Image" currentUrl={draft.heroImage} onUpload={(url) => setDraft({ ...draft, heroImage: url })} />
